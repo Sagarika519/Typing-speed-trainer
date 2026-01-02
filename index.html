@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Speed Trainer – Europe Edition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 700px;
+            max-width: 95%;
+            text-align: center;
+        }
+        h1 { color: #2c3e50; }
+        #text-display {
+            font-size: 20px;
+            line-height: 1.8;
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            text-align: left;
+        }
+        .correct { background-color: #d4edda; color: #155724; }
+        .incorrect { background-color: #f8d7da; color: #721c24; }
+        #typing-input {
+            width: 100%;
+            height: 120px;
+            font-size: 18px;
+            padding: 15px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            resize: none;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            margin: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #start-btn { background-color: #27ae60; color: white; }
+        #start-btn:hover { background-color: #219a52; }
+        #submit-btn { background-color: #2980b9; color: white; display: none; }
+        #submit-btn:hover { background-color: #2573a6; }
+        #reset-btn { background-color: #7f8c8d; color: white; display: none; }
+        #reset-btn:hover { background-color: #6c757d; }
+        .stats {
+            font-size: 22px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        #language-select {
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+        #leaderboard {
+            margin-top: 40px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .your-score {
+            background-color: #e8f4fd !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Typing Speed Trainer – Europe Edition</h1>
+        <p>Practice typing in European languages. Finish the text exactly to submit your score!</p>
+
+        <select id="language-select">
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="es">Spanish</option>
+            <option value="it">Italian</option>
+        </select>
+
+        <div id="text-display"></div>
+        <textarea id="typing-input" placeholder="Click 'Start Test' to begin..." disabled></textarea>
+
+        <button id="start-btn">Start Test</button>
+        <button id="submit-btn">Submit Score to Leaderboard</button>
+        <button id="reset-btn">New Test</button>
+
+        <div class="stats">
+            <div id="timer">Time: 0s</div>
+            <div id="wpm">WPM: 0</div>
+            <div id="accuracy">Accuracy: 0%</div>
+        </div>
+
+        <div id="leaderboard">
+            <h2>Leaderboard – Top 10</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>WPM</th>
+                        <th>Accuracy</th>
+                        <th>Language</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const texts = {
+            en: [
+                "The quick brown fox jumps over the lazy dog.",
+                "Europe is a continent with rich history and diverse cultures.",
+                "Practice typing every day to improve your speed and accuracy.",
+                "The European Union promotes peace and economic cooperation.",
+                "Paris, Berlin, Madrid, Rome, and London are major European capitals."
+            ],
+            fr: [
+                "Le renard brun rapide saute par-dessus le chien paresseux.",
+                "L'Europe est un continent riche en histoire et en cultures diverses.",
+                "Pratiquez la dactylographie tous les jours pour améliorer votre vitesse.",
+                "L'Union européenne promeut la paix et la coopération économique.",
+                "Paris, Berlin, Madrid, Rome et Londres sont des capitales européennes majeures."
+            ],
+            de: [
+                "Der schnelle braune Fuchs springt über den faulen Hund.",
+                "Europa ist ein Kontinent mit reicher Geschichte und vielfältigen Kulturen.",
+                "Übe täglich Tippen, um Geschwindigkeit und Genauigkeit zu verbessern.",
+                "Die Europäische Union fördert Frieden und wirtschaftliche Zusammenarbeit.",
+                "Paris, Berlin, Madrid, Rom und London sind wichtige europäische Hauptstädte."
+            ],
+            es: [
+                "El rápido zorro marrón salta sobre el perro perezoso.",
+                "Europa es un continente con una rica historia y diversas culturas.",
+                "Practica mecanografía todos los días para mejorar velocidad y precisión.",
+                "La Unión Europea promueve la paz y la cooperación económica.",
+                "París, Berlín, Madrid, Roma y Londres son capitales europeas importantes."
+            ],
+            it: [
+                "La volpe marrone veloce salta sopra il cane pigro.",
+                "L'Europa è un continente con una ricca storia e culture diverse.",
+                "Esercitati a digitare ogni giorno per migliorare velocità e precisione.",
+                "L'Unione Europea promuove la pace e la cooperazione economica.",
+                "Parigi, Berlino, Madrid, Roma e Londra sono capitali europee principali."
+            ]
+        };
+
+        // Elements
+        const startBtn = document.getElementById('start-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const textDisplay = document.getElementById('text-display');
+        const typingInput = document.getElementById('typing-input');
+        const timerEl = document.getElementById('timer');
+        const wpmEl = document.getElementById('wpm');
+        const accuracyEl = document.getElementById('accuracy');
+        const languageSelect = document.getElementById('language-select');
+        const leaderboardBody = document.getElementById('leaderboard-body');
+
+        let startTime, timerInterval, liveUpdateInterval;
+        let originalText = '';
+        let language = 'en';
+        let currentScore = null;
+        let leaderboard = JSON.parse(localStorage.getItem('typingLeaderboard')) || [];
+
+        updateLeaderboard();
+
+        // Event Listeners
+        languageSelect.addEventListener('change', () => {
+            language = languageSelect.value;
+            if (!typingInput.disabled) generateRandomText();
+        });
+
+        startBtn.addEventListener('click', startTest);
+        submitBtn.addEventListener('click', submitScore);
+        resetBtn.addEventListener('click', resetTest);
+        typingInput.addEventListener('input', updateHighlightAndStats);
+
+        function generateRandomText() {
+            const langTexts = texts[language];
+            const randomIndex = Math.floor(Math.random() * langTexts.length);
+            originalText = langTexts[randomIndex];
+            textDisplay.innerHTML = originalText; // Plain text for highlighting later
+        }
+
+        function startTest() {
+            generateRandomText();
+            typingInput.value = '';
+            typingInput.disabled = false;
+            typingInput.focus();
+
+            startBtn.style.display = 'none';
+            resetBtn.style.display = 'inline-block';
+            submitBtn.style.display = 'none';
+
+            timerEl.textContent = 'Time: 0s';
+            wpmEl.textContent = 'WPM: 0';
+            accuracyEl.textContent = 'Accuracy: 0%';
+
+            startTime = new Date();
+            timerInterval = setInterval(updateTimer, 1000);
+            liveUpdateInterval = setInterval(updateLiveWPM, 1000);
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((new Date() - startTime) / 1000);
+            timerEl.textContent = `Time: ${elapsed}s`;
+        }
+
+        function updateLiveWPM() {
+            const typed = typingInput.value;
+            const timeMinutes = (new Date() - startTime) / 60000;
+            const wordsTyped = typed.trim().split(/\s+/).length;
+            const wpm = timeMinutes > 0 ? Math.round(wordsTyped / timeMinutes) : 0;
+            wpmEl.textContent = `WPM: ${wpm}`;
+        }
+
+        function updateHighlightAndStats() {
+            const typed = typingInput.value;
+            let highlighted = '';
+
+            for (let i = 0; i < originalText.length; i++) {
+                if (i < typed.length) {
+                    if (typed[i] === originalText[i]) {
+                        highlighted += `<span class="correct">${originalText[i]}</span>`;
+                    } else {
+                        highlighted += `<span class="incorrect">${originalText[i]}</span>`;
+                    }
+                } else {
+                    highlighted += originalText[i];
+                }
+            }
+
+            textDisplay.innerHTML = highlighted;
+
+            // Update live accuracy
+            const accuracy = originalText.length > 0 
+                ? Math.round((typed.length - countErrors(typed)) / originalText.length * 100)
+                : 0;
+            accuracyEl.textContent = `Accuracy: ${accuracy}%`;
+
+            // Check if completed exactly
+            if (typed === originalText) {
+                finishTest();
+            }
+        }
+
+        function countErrors(typed) {
+            let errors = 0;
+            for (let i = 0; i < typed.length; i++) {
+                if (typed[i] !== originalText[i]) errors++;
+            }
+            return errors;
+        }
+
+        function finishTest() {
+            clearInterval(timerInterval);
+            clearInterval(liveUpdateInterval);
+            typingInput.disabled = true;
+
+            const timeMinutes = (new Date() - startTime) / 60000;
+            const wordCount = originalText.trim().split(/\s+/).length;
+            const finalWPM = timeMinutes > 0 ? Math.round(wordCount / timeMinutes) : 0;
+            const finalAccuracy = 100; // Since exact match required
+
+            wpmEl.textContent = `WPM: ${finalWPM}`;
+            accuracyEl.textContent = `Accuracy: ${finalAccuracy}%`;
+
+            currentScore = {
+                wpm: finalWPM,
+                accuracy: finalAccuracy,
+                language: language.toUpperCase(),
+                date: new Date().toLocaleString()
+            };
+
+            submitBtn.style.display = 'inline-block'; // Now reliably shown!
+        }
+
+        function submitScore() {
+            if (!currentScore) return;
+
+            leaderboard.push(currentScore);
+            leaderboard.sort((a, b) => b.wpm - a.wpm);
+            leaderboard = leaderboard.slice(0, 20);
+            localStorage.setItem('typingLeaderboard', JSON.stringify(leaderboard));
+            updateLeaderboard();
+
+            submitBtn.style.display = 'none';
+        }
+
+        function resetTest() {
+            clearInterval(timerInterval);
+            clearInterval(liveUpdateInterval);
+            typingInput.disabled = true;
+            typingInput.value = '';
+            textDisplay.innerHTML = '';
+            currentScore = null;
+
+            startBtn.style.display = 'inline-block';
+            submitBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
+
+            timerEl.textContent = 'Time: 0s';
+            wpmEl.textContent = 'WPM: 0';
+            accuracyEl.textContent = 'Accuracy: 0%';
+        }
+
+        function updateLeaderboard() {
+            leaderboardBody.innerHTML = '';
+            const top10 = leaderboard.slice(0, 10);
+
+            top10.forEach((score, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${score.wpm}</td>
+                    <td>${score.accuracy}%</td>
+                    <td>${score.language}</td>
+                    <td>${score.date}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+
+            if (currentScore && !top10.find(s => s.date === currentScore.date && s.wpm === currentScore.wpm)) {
+                const row = document.createElement('tr');
+                row.classList.add('your-score');
+                row.innerHTML = `
+                    <td>—</td>
+                    <td>${currentScore.wpm}</td>
+                    <td>${currentScore.accuracy}%</td>
+                    <td>${currentScore.language}</td>
+                    <td>${currentScore.date} <em>(Your latest)</em></td>
+                `;
+                leaderboardBody.appendChild(row);
+            }
+        }
+    </script>
+</body>
+</html>
